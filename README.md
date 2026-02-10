@@ -2,14 +2,26 @@
 
 MVP de un sistema de solicitudes de crédito multi-país con arquitectura modular, procesamiento asíncrono y real-time updates.
 
-## 🚀 Status - Fase 1 Completada
+## 🚀 Status 
 
-✅ **Infraestructura Base**
-- Docker Compose con PostgreSQL, Redis, backend, frontend y mock webhook server
+### Fase 1 ✅ Completada
+- Docker Compose con todos los servicios
 - NestJS backend scaffolded
 - Next.js 14 frontend con shadcn/ui
 - Makefile con comandos útiles
-- Mock webhook server para simular sistemas externos
+- Mock webhook server
+
+### Fase 2 ✅ Completada
+- **TypeORM configurado y conectado a PostgreSQL**
+- **Entity CreditApplication con enums de País y Estado**
+- **CRUD completo funcionando**:
+  - `POST /api/credit-applications` - Crear solicitud
+  - `GET /api/credit-applications` - Listar (con filtros por país y estado)
+  - `GET /api/credit-applications/:id` - Obtener detalle
+  - `PATCH /api/credit-applications/:id/status` - Cambiar estado
+- DTOs con validación de tipos
+- Base de datos con índices optimizados
+- Autosincronización de esquema en desarrollo
 
 ## 📋 Stack Tecnológico
 
@@ -143,36 +155,105 @@ credit-source-proyect/
 
 ## 📝 Próximas Fases
 
-**Fase 2: Core Backend + Database**
-- TypeORM setup
-- Entity de CreditApplication
-- Migraciones de BD
-- CRUD básico con DTOs
-
-**Fase 3: Lógica de Negocio por País**
+**Fase 3: Lógica de Negocio por País** (Siguiente)
 - Strategy pattern para reglas por país (MX, CO)
-- Validadores de documentos
-- Reglas de negocio específicas
+- Validadores de documentos (CURP, CC, DNI)
+- Reglas de negocio específicas por país
+- Integración automática al crear solicitud
 
 **Fase 4: Proveedores Bancarios**
 - Adapter pattern para diferentes proveedores
-- Mocks para cada país
+- Mocks para cada país con datos distintos
+- Factory para seleccionar proveedor por país
+- Consulta automática al crear solicitud
 
 **Fase 5: Async, Colas y Triggers**
 - BullMQ con Redis
 - PostgreSQL triggers y pg_notify
 - Workers para procesamiento asíncrono
+- Auditoría y evaluación de riesgo
 
 **Fase 6: Real-time + Webhooks**
 - WebSocket Gateway con Socket.IO
 - Endpoints para recibir/enviar webhooks
 - Integración con mock webhook server
+- Notificaciones en tiempo real al frontend
 
-**Fase 7-9: Frontend, Cache, K8s, Documentación**
+**Fases 7-9: Frontend, Cache, K8s, Documentación**
+- Interfaz completa con React
+- Estrategia de caché con Redis
+- Manifiestos de Kubernetes
+- Documentación técnica y de escalabilidad
 
-## 🧪 Pruebas Rápidas
+## 🧪 Pruebas Rápidas de API
 
-Verificar que todo está funcionando:
+### Crear una solicitud de crédito
+```bash
+curl -X POST http://localhost:3000/api/credit-applications \
+  -H "Content-Type: application/json" \
+  -d '{
+    "country": "MX",
+    "fullName": "Juan Pérez",
+    "documentType": "CURP",
+    "documentNumber": "PELJ000101HDFRRS09",
+    "amountRequested": 50000,
+    "monthlyIncome": 5000
+  }'
+```
+
+### Listar todas las solicitudes
+```bash
+curl http://localhost:3000/api/credit-applications
+```
+
+### Listar con filtros
+```bash
+# Solo aplicaciones de México en estado PENDING_VALIDATION
+curl 'http://localhost:3000/api/credit-applications?country=MX&status=PENDING_VALIDATION'
+```
+
+### Obtener detalle de una solicitud
+```bash
+curl http://localhost:3000/api/credit-applications/{id}
+```
+
+### Cambiar estado de una solicitud
+```bash
+curl -X PATCH http://localhost:3000/api/credit-applications/{id}/status \
+  -H "Content-Type: application/json" \
+  -d '{
+    "status": "APPROVED"
+  }'
+```
+
+## 📊 Modelo de Datos
+
+### Tabla: credit_applications
+
+| Campo | Tipo | Descripción |
+|---|---|---|
+| id | UUID | Identificador único |
+| country | ENUM | País (MX, CO, ES) |
+| fullName | VARCHAR | Nombre completo |
+| documentType | VARCHAR | Tipo de documento (CURP, CC, DNI, etc) |
+| documentNumber | VARCHAR | Número de documento (no se expone en API) |
+| amountRequested | DECIMAL | Monto solicitado |
+| monthlyIncome | DECIMAL | Ingreso mensual |
+| status | ENUM | DRAFT, PENDING_VALIDATION, VALIDATING, APPROVED, REJECTED, REVIEW_REQUIRED |
+| bankProviderData | JSONB | Datos del proveedor bancario (próxima fase) |
+| countryValidation | JSONB | Resultado de validaciones por país (próxima fase) |
+| riskScore | DECIMAL | Puntuación de riesgo 0-100 (próxima fase) |
+| rejectionReason | VARCHAR | Razón de rechazo |
+| createdAt | TIMESTAMP | Fecha de creación |
+| updatedAt | TIMESTAMP | Última actualización |
+| createdBy | VARCHAR | Usuario que creó |
+
+**Índices:**
+- `(country, status)` - Búsquedas por país y estado
+- `(status)` - Búsquedas por estado
+- `(createdAt)` - Ordenamiento temporal
+
+## 🧪 Pruebas Rápidas de Servicios
 
 ```bash
 # Backend respondiendo
