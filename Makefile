@@ -76,7 +76,7 @@ dev-backend: ## Run backend locally (without Docker)
 	@cd backend && pnpm run start:dev
 
 dev-frontend: ## Run frontend locally (without Docker)
-	@cd frontend && pnpm dev
+	@cd frontend && pnpm dev --port 3001
 
 # Database commands (to be implemented later)
 migrate: ## Run database migrations
