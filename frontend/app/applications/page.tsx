@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useApplications } from '@/hooks/useApplications';
+import { useMutations } from '@/hooks/useMutations';
 import { ApplicationTable, CountrySelector, StatusBadge } from '@/components/applications';
 import { Button, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui';
 import { LoadingSpinner, ErrorDisplay } from '@/components/shared';
@@ -9,6 +10,7 @@ import { APPLICATION_STATUSES, ROUTES, DEFAULT_PAGE_SIZE } from '@/lib/constants
 import { ApplicationStatus, Country } from '@/types';
 import Link from 'next/link';
 import { Plus } from 'lucide-react';
+import { toast } from 'sonner';
 
 export default function ApplicationsPage() {
     const [country, setCountry] = useState<Country | undefined>();
@@ -23,6 +25,8 @@ export default function ApplicationsPage() {
             offset,
         },
     });
+
+    const { deleteApplication, isDeleting } = useMutations();
 
     const totalPages = Math.ceil(total / DEFAULT_PAGE_SIZE);
     const currentPage = Math.floor(offset / DEFAULT_PAGE_SIZE) + 1;
@@ -45,10 +49,20 @@ export default function ApplicationsPage() {
         setOffset(0);
     };
 
+    const handleDelete = (id: string) => {
+        if (!confirm('¿Estás seguro de que deseas eliminar esta solicitud?')) {
+            return;
+        }
+        deleteApplication(id);
+    };
+
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
-                <h1 className="text-3xl font-bold">Solicitudes de Crédito</h1>
+                <div>
+                    <h1 className="text-3xl font-bold">Solicitudes de Crédito</h1>
+                    <p className="text-muted-foreground mt-1">Gestiona y revisa todas tus solicitudes</p>
+                </div>
                 <Link href={ROUTES.APPLICATION_NEW}>
                     <Button className="flex items-center space-x-2">
                         <Plus className="h-4 w-4" />
@@ -58,21 +72,22 @@ export default function ApplicationsPage() {
             </div>
 
             {/* Filtros */}
-            <div className="bg-white rounded-lg shadow p-4 space-y-4">
-                <h3 className="font-semibold">Filtros</h3>
+            <div className="bg-card rounded-lg shadow-sm border p-4 space-y-4">
+                <h3 className="font-semibold text-sm">Filtros</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
-                        <label className="text-sm font-medium">País</label>
+                        <label className="text-sm font-medium block mb-2">País</label>
                         <CountrySelector value={country} onChange={setCountry} />
                     </div>
 
                     <div>
-                        <label className="text-sm font-medium">Estado</label>
-                        <Select value={status} onValueChange={(val) => setStatus(val as ApplicationStatus)}>
+                        <label className="text-sm font-medium block mb-2">Estado</label>
+                        <Select value={status || 'ALL'} onValueChange={(val) => setStatus(val === 'ALL' ? undefined : (val as ApplicationStatus))}>
                             <SelectTrigger className="w-full">
                                 <SelectValue placeholder="Todos los estados" />
                             </SelectTrigger>
                             <SelectContent>
+                                <SelectItem value="ALL">Todos los estados</SelectItem>
                                 {Object.entries(APPLICATION_STATUSES).map(([key, value]) => (
                                     <SelectItem key={key} value={key}>
                                         {value.label}
@@ -97,34 +112,42 @@ export default function ApplicationsPage() {
                 <ErrorDisplay error={error} onRetry={() => refetch()} />
             ) : (
                 <>
-                    <ApplicationTable applications={applications} />
+                    <ApplicationTable
+                        applications={applications}
+                        isLoading={isLoading}
+                        onDelete={handleDelete}
+                    />
 
                     {/* Paginación */}
-                    <div className="flex items-center justify-between">
-                        <p className="text-sm text-muted-foreground">
-                            Mostrando {applications.length > 0 ? offset + 1 : 0} -{' '}
-                            {Math.min(offset + DEFAULT_PAGE_SIZE, total)} de {total} solicitudes
-                        </p>
-                        <div className="flex items-center space-x-2">
-                            <Button
-                                variant="outline"
-                                onClick={handlePrevPage}
-                                disabled={offset === 0}
-                            >
-                                Anterior
-                            </Button>
-                            <span className="text-sm">
-                                Página {currentPage} de {totalPages || 1}
-                            </span>
-                            <Button
-                                variant="outline"
-                                onClick={handleNextPage}
-                                disabled={offset + DEFAULT_PAGE_SIZE >= total}
-                            >
-                                Siguiente
-                            </Button>
+                    {total > 0 && (
+                        <div className="flex items-center justify-between p-4 bg-card rounded-lg border">
+                            <p className="text-sm text-muted-foreground">
+                                Mostrando {applications.length > 0 ? offset + 1 : 0} -{' '}
+                                {Math.min(offset + DEFAULT_PAGE_SIZE, total)} de {total} solicitudes
+                            </p>
+                            <div className="flex items-center space-x-2">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={handlePrevPage}
+                                    disabled={offset === 0}
+                                >
+                                    Anterior
+                                </Button>
+                                <span className="text-sm font-medium px-3 py-1 min-w-20 text-center">
+                                    {currentPage} de {totalPages || 1}
+                                </span>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={handleNextPage}
+                                    disabled={offset + DEFAULT_PAGE_SIZE >= total}
+                                >
+                                    Siguiente
+                                </Button>
+                            </div>
                         </div>
-                    </div>
+                    )}
                 </>
             )}
         </div>

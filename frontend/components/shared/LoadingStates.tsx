@@ -16,7 +16,13 @@ export function LoadingSpinner() {
     );
 }
 
-export function LoadingSkeleton({ count = 3 }: { count?: number }) {
+export function LoadingSkeleton({ count = 3, className }: { count?: number; className?: string }) {
+    // If className is provided, render a single skeleton with that specific styling
+    if (className) {
+        return <div className={`animate-pulse rounded bg-gray-300 ${className}`} />;
+    }
+
+    // Otherwise render the default skeleton pattern
     return (
         <div className="space-y-4">
             {Array.from({ length: count }).map((_, i) => (

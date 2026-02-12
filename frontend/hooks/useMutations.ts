@@ -36,9 +36,10 @@ export function useMutations() {
     const updateStatusMutation = useMutation({
         mutationFn: ({ id, data }: { id: string; data: UpdateStatusRequest }) =>
             updateApplicationStatus(id, data),
-        onSuccess: () => {
+        onSuccess: (_, variables) => {
             toast.success(MESSAGES.SUCCESS.STATUS_CHANGED);
             queryClient.invalidateQueries({ queryKey: ['applications'] });
+            queryClient.invalidateQueries({ queryKey: ['applications', variables.id] });
         },
         onError: (error: Error) => {
             toast.error(error.message || MESSAGES.ERROR.UPDATE_FAILED);
@@ -71,3 +72,4 @@ export function useMutations() {
         isDeleting: deleteMutation.isPending,
     };
 }
+

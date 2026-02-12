@@ -3,3 +3,4 @@ export { CountrySelector } from './CountrySelector';
 export { ApplicationTable } from './ApplicationTable';
 export { ApplicationCard } from './ApplicationCard';
 export { CreateApplicationForm } from './CreateApplicationForm';
+export { StatusChangeModal } from './StatusChangeModal';

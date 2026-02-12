@@ -16,7 +16,7 @@ interface ApplicationDetailPageProps {
 }
 
 export default function ApplicationDetailPage({ params }: ApplicationDetailPageProps) {
-    const { id } = params;
+    const { id } = React.use(params)
     const { application, isLoading, isError, error, refetch } = useApplication(id);
 
     if (isLoading) {
@@ -46,7 +46,10 @@ export default function ApplicationDetailPage({ params }: ApplicationDetailPageP
                 </Button>
             </Link>
 
-            <ApplicationCard application={application} />
+            <ApplicationCard
+                application={application}
+                onUpdate={() => refetch()}
+            />
         </div>
     );
 }
