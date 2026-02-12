@@ -26,7 +26,7 @@ export class CreditApplicationResponseDto {
     bankProviderData: Record<string, any>;
     countryValidation: Record<string, any>;
     riskScore: number;
-    rejectionReason: string;
+    rejectionReason: string | null;
     createdAt: Date;
     updatedAt: Date;
 

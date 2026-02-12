@@ -8,6 +8,7 @@ import {
     UpdateApplicationStatusDto,
 } from './dtos/credit-application.dto';
 import { CountryRulesService } from '../country-rules/country-rules.service';
+import { BankProvidersService } from '../bank-providers/bank-providers.service';
 
 @Injectable()
 export class CreditApplicationsService {
@@ -15,6 +16,7 @@ export class CreditApplicationsService {
         @InjectRepository(CreditApplication)
         private readonly applicationsRepository: Repository<CreditApplication>,
         private readonly countryRulesService: CountryRulesService,
+        private readonly bankProvidersService: BankProvidersService,
     ) { }
 
     async create(
@@ -41,7 +43,7 @@ export class CreditApplicationsService {
 
         // Determinar estado inicial basado en validación
         let status = ApplicationStatus.DRAFT;
-        let rejectionReason: string | undefined = undefined;
+        let rejectionReason: string | null = null;
 
         if (!validation.isValid) {
             status = ApplicationStatus.REJECTED;
@@ -121,9 +123,11 @@ export class CreditApplicationsService {
         id: string,
         dto: UpdateApplicationStatusDto,
     ): Promise<CreditApplicationResponseDto> {
-        const application = await this.applicationsRepository.findOne({
-            where: { id },
-        });
+        const application = await this.applicationsRepository
+            .createQueryBuilder('app')
+            .addSelect('app.documentNumber')
+            .where('app.id = :id', { id })
+            .getOne();
 
         if (!application) {
             throw new NotFoundException(`Solicitud ${id} no encontrada`);
@@ -134,7 +138,65 @@ export class CreditApplicationsService {
             application.rejectionReason = dto.rejectionReason;
         }
 
+        console.log("application", application);
+
+        if (dto.status === ApplicationStatus.VALIDATING) {
+            const providerResult = this.bankProvidersService.consult(
+                application.country,
+                {
+                    country: application.country,
+                    fullName: application.fullName,
+                    documentType: application.documentType,
+                    documentNumber: application.documentNumber,
+                    amountRequested: application.amountRequested,
+                    monthlyIncome: application.monthlyIncome,
+                },
+            );
+
+            application.bankProviderData = providerResult;
+            application.riskScore = providerResult.normalizedScore;
+
+            const decision = this.decideFromProvider(providerResult);
+            application.status = decision.status;
+
+            if (decision.rejectionReason) {
+                application.rejectionReason = decision.rejectionReason;
+            } else if (decision.status !== ApplicationStatus.REJECTED) {
+                application.rejectionReason = null;
+            }
+        }
+
         const updated = await this.applicationsRepository.save(application);
         return CreditApplicationResponseDto.fromEntity(updated);
+    }
+
+    private decideFromProvider(providerResult: {
+        riskLevel: 'low' | 'medium' | 'high';
+        normalizedScore: number;
+        incomeVerified: boolean;
+        score: number;
+    }): { status: ApplicationStatus; rejectionReason?: string } {
+        if (!providerResult.incomeVerified) {
+            return {
+                status: ApplicationStatus.REVIEW_REQUIRED,
+            };
+        }
+
+        if (providerResult.riskLevel === 'high' || providerResult.normalizedScore < 45) {
+            return {
+                status: ApplicationStatus.REJECTED,
+                rejectionReason: `Riesgo alto segun proveedor bancario (score: ${providerResult.score})`,
+            };
+        }
+
+        if (providerResult.riskLevel === 'medium' || providerResult.normalizedScore < 65) {
+            return {
+                status: ApplicationStatus.REVIEW_REQUIRED,
+            };
+        }
+
+        return {
+            status: ApplicationStatus.APPROVED,
+        };
     }
 }

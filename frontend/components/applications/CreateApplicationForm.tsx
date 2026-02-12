@@ -42,10 +42,15 @@ export function CreateApplicationForm({ onSuccess }: CreateApplicationFormProps)
     const [selectedCountry, setSelectedCountry] = React.useState<string>('');
     const [submitError, setSubmitError] = React.useState<string>('');
 
+    const currentCurrency = useMemo(() => {
+        const country = COUNTRIES[selectedCountry as keyof typeof COUNTRIES];
+        return country ? country.currency : 'USD';
+    }, [selectedCountry]);
+
     const form = useForm<CreateApplicationFormData>({
         resolver: zodResolver(createApplicationSchema),
         defaultValues: {
-            country: '',
+            country: undefined,
             fullName: '',
             documentType: '',
             documentNumber: '',
@@ -216,7 +221,7 @@ export function CreateApplicationForm({ onSuccess }: CreateApplicationFormProps)
                                 name="amountRequested"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Monto Solicitado (USD) *</FormLabel>
+                                        <FormLabel>Monto Solicitado {currentCurrency} *</FormLabel>
                                         <FormControl>
                                             <Input
                                                 type="number"
@@ -226,9 +231,9 @@ export function CreateApplicationForm({ onSuccess }: CreateApplicationFormProps)
                                                 onChange={(e) => field.onChange(e.target.valueAsNumber)}
                                             />
                                         </FormControl>
-                                        <FormDescription>
+                                        {/* <FormDescription>
                                             Entre {formatCurrency(FIELD_LENGTHS.MIN_AMOUNT)} y {formatCurrency(FIELD_LENGTHS.MAX_AMOUNT)}
-                                        </FormDescription>
+                                        </FormDescription> */}
                                         <FormMessage />
                                     </FormItem>
                                 )}
@@ -240,7 +245,7 @@ export function CreateApplicationForm({ onSuccess }: CreateApplicationFormProps)
                                 name="monthlyIncome"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Ingreso Mensual (USD) *</FormLabel>
+                                        <FormLabel>Ingreso Mensual {currentCurrency} *</FormLabel>
                                         <FormControl>
                                             <Input
                                                 type="number"

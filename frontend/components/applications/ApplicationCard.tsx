@@ -59,7 +59,7 @@ export function ApplicationCard({ application, onUpdate }: ApplicationCardProps)
         }));
     };
 
-    const liInRatio = application.monthlyIncome > 0
+    const liInRatio = Number(application.monthlyIncome) > 0
         ? (Number(application.amountRequested) / Number(application.monthlyIncome)).toFixed(2)
         : 'N/A';
 
@@ -193,7 +193,7 @@ export function ApplicationCard({ application, onUpdate }: ApplicationCardProps)
                                             application.riskScore >= 50 ? 'text-yellow-600' :
                                                 'text-green-600'
                                         }`}>
-                                        {application.riskScore?.toFixed(1)} / 100
+                                        {Number(application.riskScore)?.toFixed(1)} / 100
                                     </div>
                                 </div>
                             )}

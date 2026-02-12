@@ -67,8 +67,8 @@ export class CreditApplication {
     @Column({ type: 'decimal', precision: 5, scale: 2, nullable: true })
     riskScore: number; // Puntuación de riesgo (0-100)
 
-    @Column({ nullable: true })
-    rejectionReason: string;
+    @Column({ type: 'text', nullable: true })
+    rejectionReason: string | null;
 
     @CreateDateColumn()
     createdAt: Date;

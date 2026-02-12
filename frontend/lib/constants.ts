@@ -14,16 +14,19 @@ export const COUNTRIES = {
         label: 'México',
         code: Country.MX,
         documentTypes: ['CURP', 'RFC'],
+        currency: 'MXN',
     },
     [Country.CO]: {
         label: 'Colombia',
         code: Country.CO,
         documentTypes: ['CC', 'CE'],
+        currency: 'COP',
     },
     [Country.ES]: {
         label: 'España',
         code: Country.ES,
         documentTypes: ['NIF', 'NIE'],
+        currency: 'EUR',
     },
 };
 
