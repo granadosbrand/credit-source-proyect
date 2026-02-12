@@ -29,25 +29,25 @@ export const createApplicationSchema = z
             .number()
             .or(z.string().transform(Number))
             .refine((val) => !isNaN(val), 'Monto debe ser un número válido')
-            .refine((val) => val >= FIELD_LENGTHS.MIN_AMOUNT, `Mínimo $${FIELD_LENGTHS.MIN_AMOUNT}`)
-            .refine((val) => val <= FIELD_LENGTHS.MAX_AMOUNT, `Máximo $${FIELD_LENGTHS.MAX_AMOUNT}`),
+            .refine((val) => val >= FIELD_LENGTHS.MIN_AMOUNT, `Mínimo $${FIELD_LENGTHS.MIN_AMOUNT}`),
+            // .refine((val) => val <= FIELD_LENGTHS.MAX_AMOUNT, `Máximo $${FIELD_LENGTHS.MAX_AMOUNT}`),
         monthlyIncome: z
             .number()
             .or(z.string().transform(Number))
             .refine((val) => !isNaN(val), 'Ingreso debe ser un número válido')
             .refine((val) => val > 0, 'El ingreso debe ser mayor a 0')
-            .refine((val) => val <= FIELD_LENGTHS.MAX_INCOME, 'Ingreso muy alto'),
+            // .refine((val) => val <= FIELD_LENGTHS.MAX_INCOME, 'Ingreso muy alto'),
     })
-    .refine(
-        (data) => {
-            const liRatio = data.amountRequested / data.monthlyIncome;
-            return liRatio <= 10; // Maximum 10x ratio
-        },
-        {
-            message: 'El monto solicitado es muy alto comparado con tu ingreso (máximo 10x)',
-            path: ['amountRequested'],
-        }
-    );
+    // .refine(
+    //     (data) => {
+    //         const liRatio = data.amountRequested / data.monthlyIncome;
+    //         return liRatio <= 10; // Maximum 10x ratio
+    //     },
+    //     {
+    //         message: 'El monto solicitado es muy alto comparado con tu ingreso (máximo 10x)',
+    //         path: ['amountRequested'],
+    //     }
+    // );
 
 export type CreateApplicationFormData = z.infer<typeof createApplicationSchema>;
 

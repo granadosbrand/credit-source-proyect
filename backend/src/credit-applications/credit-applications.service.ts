@@ -7,12 +7,14 @@ import {
     CreditApplicationResponseDto,
     UpdateApplicationStatusDto,
 } from './dtos/credit-application.dto';
+import { CountryRulesService } from '../country-rules/country-rules.service';
 
 @Injectable()
 export class CreditApplicationsService {
     constructor(
         @InjectRepository(CreditApplication)
         private readonly applicationsRepository: Repository<CreditApplication>,
+        private readonly countryRulesService: CountryRulesService,
     ) { }
 
     async create(
@@ -23,11 +25,34 @@ export class CreditApplicationsService {
             throw new BadRequestException(`País no soportado: ${dto.country}`);
         }
 
-        if(!dto.amountRequested || dto.amountRequested <= 0) {
+        if (!dto.amountRequested || dto.amountRequested <= 0) {
             throw new BadRequestException(`Monto solicitado inválido: ${dto.amountRequested}`);
         }
 
-        // Crear nueva solicitud
+        // Validar con reglas de país
+        const validation = await this.countryRulesService.validate(dto.country, {
+            country: dto.country,
+            fullName: dto.fullName,
+            documentType: dto.documentType,
+            documentNumber: dto.documentNumber,
+            amountRequested: dto.amountRequested,
+            monthlyIncome: dto.monthlyIncome,
+        });
+
+        // Determinar estado inicial basado en validación
+        let status = ApplicationStatus.DRAFT;
+        let rejectionReason: string | undefined = undefined;
+
+        if (!validation.isValid) {
+            status = ApplicationStatus.REJECTED;
+            rejectionReason = validation.allErrors.join('; ');
+        } else if (validation.allWarnings.length > 0) {
+            status = ApplicationStatus.REVIEW_REQUIRED;
+        } else {
+            status = ApplicationStatus.PENDING_VALIDATION;
+        }
+
+        // Crear nueva solicitud con resultados de validación
         const application = this.applicationsRepository.create({
             country: dto.country,
             fullName: dto.fullName,
@@ -35,7 +60,14 @@ export class CreditApplicationsService {
             documentNumber: dto.documentNumber,
             amountRequested: dto.amountRequested,
             monthlyIncome: dto.monthlyIncome,
-            status: ApplicationStatus.DRAFT,
+            status,
+            rejectionReason,
+            countryValidation: {
+                isValid: validation.isValid,
+                errors: validation.allErrors,
+                warnings: validation.allWarnings,
+                ...validation.metadata,
+            },
         });
 
         const saved = await this.applicationsRepository.save(application);

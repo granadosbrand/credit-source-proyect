@@ -259,7 +259,7 @@ export function CreateApplicationForm({ onSuccess }: CreateApplicationFormProps)
                             />
 
                             {/* L/I Ratio Display */}
-                            {monthlyIncome > 0 && (
+                            {/*monthlyIncome > 0 && (
                                 <div className={`p-4 rounded-md border-2 ${isRatioInvalid
                                         ? 'border-red-200 bg-red-50'
                                         : isRatioCritical
@@ -299,13 +299,13 @@ export function CreateApplicationForm({ onSuccess }: CreateApplicationFormProps)
                                         </div>
                                     </div>
                                 </div>
-                            )}
+                            )*/}
 
                             {/* Botones */}
                             <div className="flex gap-3 pt-4">
                                 <Button
                                     type="submit"
-                                    disabled={isCreating || isRatioInvalid}
+                                    disabled={isCreating}
                                     className="flex-1"
                                 >
                                     {isCreating ? 'Creando solicitud...' : 'Crear Solicitud'}
