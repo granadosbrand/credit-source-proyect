@@ -3,9 +3,10 @@
 import React, { useState } from 'react';
 import { useApplications } from '@/hooks/useApplications';
 import { useMutations } from '@/hooks/useMutations';
+import { useRealtimeUpdates } from '@/hooks/useRealtimeUpdates';
 import { ApplicationTable, CountrySelector, StatusBadge } from '@/components/applications';
 import { Button, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui';
-import { LoadingSpinner, ErrorDisplay } from '@/components/shared';
+import { LoadingSpinner, ErrorDisplay, ConnectionStatus } from '@/components/shared';
 import { APPLICATION_STATUSES, ROUTES, DEFAULT_PAGE_SIZE } from '@/lib/constants';
 import { ApplicationStatus, Country } from '@/types';
 import Link from 'next/link';
@@ -16,6 +17,9 @@ export default function ApplicationsPage() {
     const [country, setCountry] = useState<Country | undefined>();
     const [status, setStatus] = useState<ApplicationStatus | undefined>();
     const [offset, setOffset] = useState(0);
+
+    // Enable real-time updates
+    const { isConnected } = useRealtimeUpdates();
 
     const { applications, total, isLoading, isError, error, refetch } = useApplications({
         filters: {
@@ -150,6 +154,9 @@ export default function ApplicationsPage() {
                     )}
                 </>
             )}
+
+            {/* WebSocket Connection Status */}
+            <ConnectionStatus />
         </div>
     );
 }

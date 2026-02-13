@@ -9,7 +9,7 @@ export const getDatabaseConfig = (): TypeOrmModuleOptions => ({
     database: process.env.DATABASE_NAME || 'credit_db',
     entities: [__dirname + '/../**/*.entity{.ts,.js}'],
     migrations: [__dirname + '/../database/migrations/*{.ts,.js}'],
-    migrationsRun: false,
+    migrationsRun: true, // Run migrations automatically
     synchronize: process.env.NODE_ENV === 'development', // SOLO para desarrollo
     logging: process.env.NODE_ENV === 'development',
     ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,

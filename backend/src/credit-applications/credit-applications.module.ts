@@ -5,12 +5,14 @@ import { CreditApplicationsService } from './credit-applications.service';
 import { CreditApplicationsController } from './credit-applications.controller';
 import { CountryRulesModule } from '../country-rules/country-rules.module';
 import { BankProvidersModule } from '../bank-providers/bank-providers.module';
+import { QueueModule } from '../queue/queue.module';
 
 @Module({
     imports: [
         TypeOrmModule.forFeature([CreditApplication]),
         CountryRulesModule,
         BankProvidersModule,
+        QueueModule,
     ],
     controllers: [CreditApplicationsController],
     providers: [CreditApplicationsService],

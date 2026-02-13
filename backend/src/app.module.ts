@@ -4,9 +4,18 @@ import { getDatabaseConfig } from './config/database.config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { CreditApplicationsModule } from './credit-applications/credit-applications.module';
+import { DatabaseListenersModule } from './database/listeners/database-listeners.module';
+import { RealtimeModule } from './realtime/realtime.module';
+import { WebhooksModule } from './webhooks/webhooks.module';
 
 @Module({
-  imports: [TypeOrmModule.forRoot(getDatabaseConfig()), CreditApplicationsModule],
+  imports: [
+    TypeOrmModule.forRoot(getDatabaseConfig()),
+    CreditApplicationsModule,
+    DatabaseListenersModule,
+    RealtimeModule,
+    WebhooksModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })

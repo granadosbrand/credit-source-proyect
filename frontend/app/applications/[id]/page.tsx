@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { useApplication } from '@/hooks/useApplication';
+import { useRealtimeUpdates } from '@/hooks/useRealtimeUpdates';
 import { ApplicationCard } from '@/components/applications';
 import { Button } from '@/components/ui';
 import { LoadingSpinner, ErrorDisplay } from '@/components/shared';
@@ -16,7 +17,11 @@ interface ApplicationDetailPageProps {
 }
 
 export default function ApplicationDetailPage({ params }: ApplicationDetailPageProps) {
-    const { id } = React.use(params)
+    const { id } = React.use(params);
+
+    // Enable real-time updates for this specific application
+    useRealtimeUpdates();
+
     const { application, isLoading, isError, error, refetch } = useApplication(id);
 
     if (isLoading) {

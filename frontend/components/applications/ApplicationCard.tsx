@@ -21,7 +21,7 @@ interface ApplicationCardProps {
  */
 function getAvailableStatusTransitions(currentStatus: ApplicationStatus): ApplicationStatus[] {
     const transitions: Record<ApplicationStatus, ApplicationStatus[]> = {
-        [ApplicationStatus.DRAFT]: [ApplicationStatus.PENDING_VALIDATION],
+        [ApplicationStatus.DRAFT]: [ApplicationStatus.PENDING_VALIDATION, ApplicationStatus.REJECTED],
         [ApplicationStatus.PENDING_VALIDATION]: [ApplicationStatus.VALIDATING],
         [ApplicationStatus.VALIDATING]: [
             ApplicationStatus.APPROVED,
@@ -30,7 +30,7 @@ function getAvailableStatusTransitions(currentStatus: ApplicationStatus): Applic
         ],
         [ApplicationStatus.APPROVED]: [],
         [ApplicationStatus.REJECTED]: [],
-        [ApplicationStatus.REVIEW_REQUIRED]: [ApplicationStatus.VALIDATING],
+        [ApplicationStatus.REVIEW_REQUIRED]: [ApplicationStatus.VALIDATING, ApplicationStatus.REJECTED],
     };
     return transitions[currentStatus] || [];
 }

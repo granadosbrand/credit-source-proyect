@@ -61,6 +61,7 @@ temp/
 *.crt
 
 *.pdf
+.github/*
 
 # Keep PDF for reference (confidential document)
 !README.pdf
