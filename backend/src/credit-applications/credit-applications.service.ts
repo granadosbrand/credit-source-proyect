@@ -89,6 +89,8 @@ export class CreditApplicationsService implements OnModuleInit {
             throw new BadRequestException(`Monto solicitado inválido: ${dto.amountRequested}`);
         }
 
+        console.log("full dto: ", dto)
+
         // Validar con reglas de país
         const validation = await this.countryRulesService.validate(dto.country, {
             country: dto.country,
@@ -219,10 +221,11 @@ export class CreditApplicationsService implements OnModuleInit {
         return application;
     }
 
-    async findOne(id: string): Promise<CreditApplicationPublicDto> {
+    async findOne(id: string): Promise<CreditApplicationResponseDto> {
         // Intentar obtener del cache
         const cacheKey = this.getCacheKeyForFindOne(id);
-        const cached = await this.redisService.get<CreditApplicationPublicDto>(cacheKey);
+        const cached = await this.redisService.get<CreditApplicationResponseDto>(cacheKey);
+
 
         if (cached) {
             return cached;
@@ -236,7 +239,7 @@ export class CreditApplicationsService implements OnModuleInit {
             throw new NotFoundException(`Solicitud ${id} no encontrada`);
         }
 
-        const result = CreditApplicationPublicDto.fromEntity(application);
+        const result = CreditApplicationResponseDto.fromEntity(application);
 
         // Guardar en cache (300 segundos = 5 minutos)
         await this.redisService.set(cacheKey, result, 300);

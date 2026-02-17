@@ -1,5 +1,6 @@
 import { v4 as uuid } from 'uuid';
 import { CreditApplication, Country, ApplicationStatus } from '../credit-application.entity';
+import { debugPort } from 'process';
 
 export class CreateCreditApplicationDto {
     country: Country;
@@ -79,6 +80,7 @@ export class CreditApplicationPublicDto {
         dto.rejectionReason = entity.rejectionReason;
         dto.createdAt = entity.createdAt;
         dto.updatedAt = entity.updatedAt;
+        
         return dto;
     }
 }

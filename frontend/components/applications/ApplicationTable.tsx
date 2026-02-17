@@ -46,7 +46,7 @@ export function ApplicationTable({
                         <TableHead className="font-semibold">Nombre</TableHead>
                         <TableHead className="font-semibold">País</TableHead>
                         <TableHead className="font-semibold text-right">Monto Solicitado</TableHead>
-                        <TableHead className="font-semibold text-right">Ingreso Mensual</TableHead>
+                        {/* <TableHead className="font-semibold text-right">Ingreso Mensual</TableHead> */}
                         <TableHead className="font-semibold">Estado</TableHead>
                         <TableHead className="font-semibold">Fecha de Creación</TableHead>
                         <TableHead className="font-semibold text-right">Acciones</TableHead>
@@ -59,7 +59,7 @@ export function ApplicationTable({
                                 <TableCell><LoadingSkeleton className="h-4 w-24" /></TableCell>
                                 <TableCell><LoadingSkeleton className="h-4 w-12" /></TableCell>
                                 <TableCell><LoadingSkeleton className="h-4 w-20 ml-auto" /></TableCell>
-                                <TableCell><LoadingSkeleton className="h-4 w-20 ml-auto" /></TableCell>
+                                {/* <TableCell><LoadingSkeleton className="h-4 w-20 ml-auto" /></TableCell> */}
                                 <TableCell><LoadingSkeleton className="h-6 w-24" /></TableCell>
                                 <TableCell><LoadingSkeleton className="h-4 w-24" /></TableCell>
                                 <TableCell><LoadingSkeleton className="h-4 w-16 ml-auto" /></TableCell>
@@ -75,9 +75,9 @@ export function ApplicationTable({
                                 <TableCell className="text-right font-medium">
                                     {formatCurrency(app!.amountRequested)}
                                 </TableCell>
-                                <TableCell className="text-right font-medium">
+                                {/* <TableCell className="text-right font-medium">
                                     {formatCurrency(app!.monthlyIncome)}
-                                </TableCell>
+                                </TableCell> */}
                                 <TableCell>
                                     <StatusBadge status={app!.status} />
                                 </TableCell>
