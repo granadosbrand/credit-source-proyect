@@ -7,6 +7,9 @@ import {
     Body,
     Query,
     HttpCode,
+    UseGuards,
+    Request,
+    ForbiddenException,
 } from '@nestjs/common';
 import { CreditApplicationsService } from './credit-applications.service';
 import {
@@ -16,8 +19,11 @@ import {
     UpdateApplicationStatusDto,
 } from './dtos/credit-application.dto';
 import { Country, ApplicationStatus } from './credit-application.entity';
+import { JwtAuthGuard, RolesGuard, Roles } from '../common/guards';
+import { UserRole } from '../auth/entities/user.entity';
 
 @Controller('api/credit-applications')
+@UseGuards(JwtAuthGuard)
 export class CreditApplicationsController {
     constructor(
         private readonly creditApplicationsService: CreditApplicationsService,
@@ -27,8 +33,10 @@ export class CreditApplicationsController {
     @HttpCode(201)
     async create(
         @Body() dto: CreateCreditApplicationDto,
+        @Request() req: any,
     ): Promise<CreditApplicationResponseDto> {
-        return this.creditApplicationsService.create(dto);
+        const userId = req.user.userId;
+        return this.creditApplicationsService.create(dto, userId);
     }
 
     @Get()
@@ -37,21 +45,43 @@ export class CreditApplicationsController {
         @Query('status') status?: ApplicationStatus,
         @Query('limit') limit?: number,
         @Query('offset') offset?: number,
+        @Request() req?: any,
     ) {
+        const userId = req?.user?.userId;
+        const userRole = req?.user?.role;
+
         return this.creditApplicationsService.findAll(
             country,
             status,
             limit || 50,
             offset || 0,
+            userId,
+            userRole,
         );
     }
 
     @Get(':id')
-    async findOne(@Param('id') id: string): Promise<CreditApplicationPublicDto> {
+    async findOne(
+        @Param('id') id: string,
+        @Request() req: any,
+    ): Promise<CreditApplicationPublicDto> {
+        const userId = req.user.userId;
+        const userRole = req.user.role;
+
+        // Obtener la aplicación
+        const application = await this.creditApplicationsService.findOneById(id);
+
+        // Si no es admin y no es su solicitud, denegar acceso
+        if (userRole !== UserRole.ADMIN && application.createdBy !== userId) {
+            throw new ForbiddenException('No tienes acceso a esta solicitud');
+        }
+
         return this.creditApplicationsService.findOne(id);
     }
 
     @Patch(':id/status')
+    @UseGuards(RolesGuard)
+    @Roles([UserRole.ADMIN])
     async updateStatus(
         @Param('id') id: string,
         @Body() dto: UpdateApplicationStatusDto,
@@ -59,3 +89,4 @@ export class CreditApplicationsController {
         return this.creditApplicationsService.updateStatus(id, dto);
     }
 }
+

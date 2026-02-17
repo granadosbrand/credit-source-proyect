@@ -86,7 +86,7 @@ export class CreditApplication {
     @UpdateDateColumn()
     updatedAt: Date;
 
-    @Column({ nullable: true })
+    @Column({ type: 'uuid', nullable: true })
     createdBy: string; // ID del usuario (a implementar con auth)
 
     /**

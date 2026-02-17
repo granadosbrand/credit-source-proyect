@@ -78,6 +78,7 @@ export class CreditApplicationsService implements OnModuleInit {
 
     async create(
         dto: CreateCreditApplicationDto,
+        userId: string,
     ): Promise<CreditApplicationResponseDto> {
         // Validar país
         if (!Object.values(Country).includes(dto.country)) {
@@ -121,6 +122,7 @@ export class CreditApplicationsService implements OnModuleInit {
             monthlyIncome: dto.monthlyIncome,
             status,
             rejectionReason,
+            createdBy: userId,
             countryValidation: {
                 isValid: validation.isValid,
                 errors: validation.allErrors,
@@ -156,6 +158,8 @@ export class CreditApplicationsService implements OnModuleInit {
         status?: ApplicationStatus,
         limit = 50,
         offset = 0,
+        userId?: string,
+        userRole?: string,
     ): Promise<{ data: CreditApplicationPublicDto[]; total: number }> {
         // Intentar obtener del cache (TTL 5 minutos)
         const cacheKey = this.getCacheKeyForFindAll(country, status, limit, offset);
@@ -170,8 +174,15 @@ export class CreditApplicationsService implements OnModuleInit {
 
         const query = this.applicationsRepository.createQueryBuilder('app');
 
-        if (country) {
+        // Si no es admin, filtrar solo sus solicitudes
+        if (userId && userRole !== 'ADMIN') {
+            query.where('app.createdBy = :userId', { userId });
+        } else if (country) {
             query.where('app.country = :country', { country });
+        }
+
+        if (country) {
+            query.andWhere('app.country = :country', { country });
         }
 
         if (status) {
@@ -194,6 +205,22 @@ export class CreditApplicationsService implements OnModuleInit {
         await this.redisService.set(cacheKey, result, 300);
 
         return result;
+    }
+
+    /**
+     * Obtener entity completo de una solicitud (para validaciones internas)
+     * No cachea porque retorna el entity completo con datos sensibles
+     */
+    async findOneById(id: string): Promise<CreditApplication> {
+        const application = await this.applicationsRepository.findOne({
+            where: { id },
+        });
+
+        if (!application) {
+            throw new NotFoundException(`Solicitud ${id} no encontrada`);
+        }
+
+        return application;
     }
 
     async findOne(id: string): Promise<CreditApplicationPublicDto> {

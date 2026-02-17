@@ -7,10 +7,12 @@ import { CreditApplicationsModule } from './credit-applications/credit-applicati
 import { DatabaseListenersModule } from './database/listeners/database-listeners.module';
 import { RealtimeModule } from './realtime/realtime.module';
 import { WebhooksModule } from './webhooks/webhooks.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
     TypeOrmModule.forRoot(getDatabaseConfig()),
+    AuthModule,
     CreditApplicationsModule,
     DatabaseListenersModule,
     RealtimeModule,
