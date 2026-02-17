@@ -4,10 +4,8 @@ import type { NextRequest } from 'next/server';
 // Rutas públicas que no requieren autenticación
 const publicRoutes = ['/auth/login', '/auth/register', '/'];
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
     const { pathname } = request.nextUrl;
-
-    console.log("pato")
 
     // Saltar middleware para rutas estáticas
     if (
@@ -25,7 +23,6 @@ export function middleware(request: NextRequest) {
 
         // Si está autenticado y accede a auth, redirigir a applications
         if (bearerToken && (pathname === '/auth/login' || pathname === '/auth/register')) {
-            console.log("entró aqui juemadre")
             return NextResponse.redirect(new URL('/applications', request.url));
         }
         return NextResponse.next();
