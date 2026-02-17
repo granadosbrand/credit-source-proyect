@@ -13,13 +13,13 @@ export enum UserRole {
 }
 
 @Entity('users')
-@Index('idx_users_email', ['email'], { unique: true })
+@Index('idx_users_username', ['username'], { unique: true })
 export class User {
     @PrimaryGeneratedColumn('uuid')
     id: string;
 
     @Column({ unique: true })
-    email: string;
+    username: string;
 
     @Column({ select: false }) // No retornar por defecto en queries
     passwordHash: string;

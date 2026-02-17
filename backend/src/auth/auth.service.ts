@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
-import { User, UserRole } from './entities/user.entity';
+import { User } from './entities/user.entity';
 import { RegisterDto, LoginDto, AuthResponseDto } from './dtos';
 
 @Injectable()
@@ -18,14 +18,13 @@ export class AuthService {
      * Registrar nuevo usuario
      */
     async register(dto: RegisterDto): Promise<AuthResponseDto> {
-        console.log('Registering user with email:', dto.email, 'and role:', dto.role);
-        // Verificar si el email ya existe
+        // Verificar si el usuario ya existe
         const existingUser = await this.usersRepository.findOne({
-            where: { email: dto.email },
+            where: { username: dto.username },
         });
 
         if (existingUser) {
-            throw new BadRequestException('El email ya está registrado');
+            throw new BadRequestException('El nombre de usuario ya está registrado');
         }
 
         // Hash de la contraseña
@@ -33,7 +32,7 @@ export class AuthService {
 
         // Crear nuevo usuario
         const user = this.usersRepository.create({
-            email: dto.email,
+            username: dto.username,
             passwordHash,
             role: dto.role,
         });
@@ -47,7 +46,7 @@ export class AuthService {
             access_token,
             user: {
                 id: savedUser.id,
-                email: savedUser.email,
+                username: savedUser.username,
                 role: savedUser.role,
             },
         };
@@ -57,10 +56,10 @@ export class AuthService {
      * Login: validar credenciales y retornar JWT
      */
     async login(dto: LoginDto): Promise<AuthResponseDto> {
-        // Buscar usuario por email (incluir password)
+        // Buscar usuario por username (incluir password)
         const user = await this.usersRepository.findOne({
-            where: { email: dto.email },
-            select: ['id', 'email', 'passwordHash', 'role'],
+            where: { username: dto.username },
+            select: ['id', 'username', 'passwordHash', 'role'],
         });
 
         if (!user) {
@@ -73,11 +72,6 @@ export class AuthService {
             throw new UnauthorizedException('Credenciales inválidas');
         }
 
-        // Validar que el rol coincida
-        if (user.role !== dto.role) {
-            throw new UnauthorizedException(`El usuario no tiene rol ${dto.role}`);
-        }
-
         // Generar JWT
         const access_token = this.generateToken(user);
 
@@ -85,7 +79,7 @@ export class AuthService {
             access_token,
             user: {
                 id: user.id,
-                email: user.email,
+                username: user.username,
                 role: user.role,
             },
         };
@@ -108,7 +102,7 @@ export class AuthService {
     private generateToken(user: User): string {
         const payload = {
             sub: user.id, // Subject
-            email: user.email,
+            username: user.username,
             role: user.role,
         };
 

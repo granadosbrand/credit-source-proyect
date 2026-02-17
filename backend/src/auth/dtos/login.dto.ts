@@ -1,13 +1,12 @@
-import { IsEmail, IsString, IsEnum } from 'class-validator';
-import { UserRole } from '../entities/user.entity';
+import { IsString, MinLength, MaxLength, Matches } from 'class-validator';
 
 export class LoginDto {
-    @IsEmail()
-    email: string;
+    @IsString()
+    @MinLength(3, { message: 'El usuario debe tener al menos 3 caracteres' })
+    @MaxLength(30, { message: 'El usuario no puede superar 30 caracteres' })
+    @Matches(/^[a-zA-Z0-9._-]+$/, { message: 'Usuario inválido' })
+    username: string;
 
     @IsString()
     password: string;
-
-    @IsEnum(UserRole, { message: 'El rol debe ser USER o ADMIN' })
-    role: UserRole;
 }
