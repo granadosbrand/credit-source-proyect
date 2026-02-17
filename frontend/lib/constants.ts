@@ -106,6 +106,8 @@ export const PAGE_SIZES = [10, 20, 50, 100];
 // Routes
 export const ROUTES = {
     HOME: '/',
+    AUTH_LOGIN: '/auth/login',
+    AUTH_REGISTER: '/auth/register',
     APPLICATIONS: '/applications',
     APPLICATION_NEW: '/applications/new',
     APPLICATION_DETAIL: (id: string) => `/applications/${id}`,

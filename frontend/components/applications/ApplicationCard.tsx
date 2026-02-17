@@ -14,6 +14,7 @@ import { UpdateApplicationStatusFormData } from '@/lib/validations';
 interface ApplicationCardProps {
     application: CreditApplication;
     onUpdate?: () => void;
+    userRole?: 'USER' | 'ADMIN';
 }
 
 /**
@@ -80,8 +81,8 @@ export function ApplicationCard({ application, onUpdate }: ApplicationCardProps)
 
     return (
         <div className="space-y-4">
-            {/* Action Buttons */}
-            {availableStatuses.length > 0 && (
+            {/* Action Buttons - Solo para ADMIN */}
+            {userRole === 'ADMIN' && availableStatuses.length > 0 && (
                 <div className="flex gap-2">
                     <Button
                         onClick={() => setIsStatusModalOpen(true)}
@@ -190,8 +191,8 @@ export function ApplicationCard({ application, onUpdate }: ApplicationCardProps)
                                 <div>
                                     <div className="text-sm text-muted-foreground font-medium">Puntuación de Riesgo</div>
                                     <div className={`text-lg font-semibold mt-1 ${application.riskScore >= 70 ? 'text-red-600' :
-                                            application.riskScore >= 50 ? 'text-yellow-600' :
-                                                'text-green-600'
+                                        application.riskScore >= 50 ? 'text-yellow-600' :
+                                            'text-green-600'
                                         }`}>
                                         {Number(application.riskScore)?.toFixed(1)} / 100
                                     </div>

@@ -11,6 +11,32 @@ import {
 } from './application';
 import { PaginatedResponse } from './common';
 
+// Auth types
+export type UserRole = 'USER' | 'ADMIN';
+
+export interface User {
+    id: string;
+    email: string;
+    role: UserRole;
+}
+
+export interface AuthResponse {
+    access_token: string;
+    user: User;
+}
+
+export interface RegisterRequest {
+    email: string;
+    password: string;
+    role: UserRole;
+}
+
+export interface LoginRequest {
+    email: string;
+    password: string;
+    role: UserRole;
+}
+
 // Request payloads
 export interface CreateApplicationRequest extends CreateCreditApplicationDto { }
 
@@ -31,3 +57,4 @@ export interface ApiClientOptions {
     baseURL?: string;
     timeout?: number;
 }
+

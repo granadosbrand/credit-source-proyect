@@ -3,6 +3,7 @@
 import React from 'react';
 import { useApplication } from '@/hooks/useApplication';
 import { useRealtimeUpdates } from '@/hooks/useRealtimeUpdates';
+import { useAuthStore } from '@/store/authStore';
 import { ApplicationCard } from '@/components/applications';
 import { Button } from '@/components/ui';
 import { LoadingSpinner, ErrorDisplay } from '@/components/shared';
@@ -18,6 +19,7 @@ interface ApplicationDetailPageProps {
 
 export default function ApplicationDetailPage({ params }: ApplicationDetailPageProps) {
     const { id } = React.use(params);
+    const { user } = useAuthStore();
 
     // Enable real-time updates for this specific application
     useRealtimeUpdates();
@@ -54,6 +56,7 @@ export default function ApplicationDetailPage({ params }: ApplicationDetailPageP
             <ApplicationCard
                 application={application}
                 onUpdate={() => refetch()}
+                userRole={user?.role}
             />
         </div>
     );

@@ -56,6 +56,9 @@ class ApiClient {
             // Unauthorized - clear token and redirect to login
             this.clearAuthToken();
             // Could redirect to login page here
+            if (typeof window !== 'undefined') {
+                window.location.href = '/auth/login';
+            }
         }
 
         if (status === 403) {
@@ -87,12 +90,18 @@ class ApiClient {
     }
 
     private getAuthToken(): string | null {
-        // TODO: Get token from localStorage or other storage
+        // Get token from localStorage
+        if (typeof window !== 'undefined') {
+            return localStorage.getItem('auth_token');
+        }
         return null;
     }
 
     private clearAuthToken(): void {
-        // TODO: Clear token from storage
+        // Clear token from storage
+        if (typeof window !== 'undefined') {
+            localStorage.removeItem('auth_token');
+        }
     }
 
     public getAxiosInstance(): AxiosInstance {
