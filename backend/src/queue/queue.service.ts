@@ -170,7 +170,7 @@ export class QueueService {
         this.logger.log(`[RISK START] Evaluating app ${application_id}, score: ${risk_score}`);
 
         // Realistic 3-5 second delay for risk evaluation
-        const processingTime = 3000 + Math.random() * 2000;
+        const processingTime = 5000 + Math.random() * 2000;
         await this.delay(processingTime);
 
         const riskLevel = risk_score >= 70 ? 'low' : risk_score >= 50 ? 'medium' : 'high';
@@ -192,7 +192,7 @@ export class QueueService {
         );
 
         // 1 second audit log delay
-        await this.delay(1000);
+        await this.delay(5000);
 
         this.logger.log(`[AUDIT COMPLETE] App ${application_id} action logged`);
 
@@ -207,7 +207,7 @@ export class QueueService {
         this.logger.log(`[NOTIFICATION START] Sending notification for ${full_name} (app ${application_id})`);
 
         // 2 second notification delay
-        await this.delay(2000);
+        await this.delay(5000);
 
         this.logger.log(
             `[NOTIFICATION COMPLETE] Notification sent for app ${application_id} (status: ${status})`,

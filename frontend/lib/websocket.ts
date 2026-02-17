@@ -20,10 +20,23 @@ export type StatusChangeEvent = {
 };
 
 /**
+ * Event payload when application is created
+ */
+export type ApplicationCreatedEvent = {
+    applicationId: string;
+    country: string;
+    fullName: string;
+    status: string;
+    amountRequested: number;
+    timestamp?: string;
+};
+
+/**
  * WebSocket event names
  */
 export const WS_EVENTS = {
     STATUS_CHANGED: 'credit-application.status-changed',
+    APPLICATION_CREATED: 'credit-application.created',
     CONNECT: 'connect',
     DISCONNECT: 'disconnect',
     CONNECT_ERROR: 'connect_error',

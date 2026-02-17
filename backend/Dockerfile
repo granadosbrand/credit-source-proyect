@@ -32,8 +32,8 @@ RUN pnpm install --frozen-lockfile
 COPY . .
 
 ENV NODE_ENV=development
-EXPOSE 3000
-CMD ["pnpm", "run", "start:dev"]
+EXPOSE 3000 9229
+CMD ["pnpm", "run", "start:debug"]
 
 # Production stage
 FROM node:20-alpine AS production

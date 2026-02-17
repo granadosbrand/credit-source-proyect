@@ -1,23 +1,80 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException, OnModuleInit, Inject } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CreditApplication, Country, ApplicationStatus } from './credit-application.entity';
 import {
     CreateCreditApplicationDto,
     CreditApplicationResponseDto,
+    CreditApplicationPublicDto,
     UpdateApplicationStatusDto,
 } from './dtos/credit-application.dto';
 import { CountryRulesService } from '../country-rules/country-rules.service';
 import { BankProvidersService } from '../bank-providers/bank-providers.service';
+import { RedisService } from '../redis/redis.service';
+import { EncryptionService } from '../common/encryption/encryption.service';
+import { RealtimeGateway } from '../realtime/realtime.gateway';
 
 @Injectable()
-export class CreditApplicationsService {
+export class CreditApplicationsService implements OnModuleInit {
     constructor(
         @InjectRepository(CreditApplication)
         private readonly applicationsRepository: Repository<CreditApplication>,
         private readonly countryRulesService: CountryRulesService,
         private readonly bankProvidersService: BankProvidersService,
+        private readonly redisService: RedisService,
+        private readonly encryptionService: EncryptionService,
+        @Inject(RealtimeGateway)
+        private readonly realtimeGateway: RealtimeGateway,
     ) { }
+
+    /**
+     * En el inicialización del módulo, setear el servicio de encriptación en la entity
+     */
+    onModuleInit(): void {
+        CreditApplication.setEncryptionService(this.encryptionService);
+    }
+
+    /**
+     * Generar clave de cache para findAll
+     */
+    private getCacheKeyForFindAll(country?: Country, status?: ApplicationStatus, limit?: number, offset?: number): string {
+        const parts = ['credit-apps-list'];
+        if (country) parts.push(`country:${country}`);
+        if (status) parts.push(`status:${status}`);
+        if (limit) parts.push(`limit:${limit}`);
+        if (offset) parts.push(`offset:${offset}`);
+        return parts.join(':');
+    }
+
+    /**
+     * Generar clave de cache para findOne
+     */
+    private getCacheKeyForFindOne(id: string): string {
+        return `credit-app:${id}`;
+    }
+
+    /**
+     * Método público para invalidar cache de una aplicación específica
+     * Usado por processors, webhooks y otros servicios
+     */
+    async invalidateCacheForApplication(id: string, country?: Country, status?: ApplicationStatus): Promise<void> {
+        const keysToInvalidate = [
+            this.getCacheKeyForFindOne(id),
+            this.getCacheKeyForFindAll(),
+        ];
+
+        if (country) {
+            keysToInvalidate.push(this.getCacheKeyForFindAll(country));
+        }
+
+        await this.redisService.delMany(keysToInvalidate);
+
+        // Invalidar TODOS los keys que contengan "credit-apps-list:country:X"
+        // para cubrir todas las combinaciones de status/limit/offset
+        if (country) {
+            await this.redisService.delByPattern(`credit-apps-list:country:${country}*`);
+        }
+    }
 
     async create(
         dto: CreateCreditApplicationDto,
@@ -73,6 +130,24 @@ export class CreditApplicationsService {
         });
 
         const saved = await this.applicationsRepository.save(application);
+
+        // Invalidar cache de listados
+        const keysToInvalidate = [
+            this.getCacheKeyForFindAll(),
+            this.getCacheKeyForFindAll(dto.country),
+        ];
+        await this.redisService.delMany(keysToInvalidate);
+
+        // Emitir evento WebSocket para actualización en tiempo real
+        this.realtimeGateway.emitApplicationCreated({
+            applicationId: saved.id,
+            country: saved.country,
+            fullName: saved.fullName,
+            status: saved.status,
+            amountRequested: Number(saved.amountRequested),
+            timestamp: new Date().toISOString(),
+        });
+
         return CreditApplicationResponseDto.fromEntity(saved);
     }
 
@@ -81,7 +156,18 @@ export class CreditApplicationsService {
         status?: ApplicationStatus,
         limit = 50,
         offset = 0,
-    ): Promise<{ data: CreditApplicationResponseDto[]; total: number }> {
+    ): Promise<{ data: CreditApplicationPublicDto[]; total: number }> {
+        // Intentar obtener del cache (TTL 5 minutos)
+        const cacheKey = this.getCacheKeyForFindAll(country, status, limit, offset);
+        const cached = await this.redisService.get<{
+            data: CreditApplicationPublicDto[];
+            total: number;
+        }>(cacheKey);
+
+        if (cached) {
+            return cached;
+        }
+
         const query = this.applicationsRepository.createQueryBuilder('app');
 
         if (country) {
@@ -99,15 +185,26 @@ export class CreditApplicationsService {
             .offset(offset)
             .getMany();
 
-        return {
-            data: applications.map((app) =>
-                CreditApplicationResponseDto.fromEntity(app),
-            ),
+        const result = {
+            data: applications.map((app) => CreditApplicationPublicDto.fromEntity(app)),
             total,
         };
+
+        // Guardar en cache (300 segundos = 5 minutos)
+        await this.redisService.set(cacheKey, result, 300);
+
+        return result;
     }
 
-    async findOne(id: string): Promise<CreditApplicationResponseDto> {
+    async findOne(id: string): Promise<CreditApplicationPublicDto> {
+        // Intentar obtener del cache
+        const cacheKey = this.getCacheKeyForFindOne(id);
+        const cached = await this.redisService.get<CreditApplicationPublicDto>(cacheKey);
+
+        if (cached) {
+            return cached;
+        }
+
         const application = await this.applicationsRepository.findOne({
             where: { id },
         });
@@ -116,7 +213,12 @@ export class CreditApplicationsService {
             throw new NotFoundException(`Solicitud ${id} no encontrada`);
         }
 
-        return CreditApplicationResponseDto.fromEntity(application);
+        const result = CreditApplicationPublicDto.fromEntity(application);
+
+        // Guardar en cache (300 segundos = 5 minutos)
+        await this.redisService.set(cacheKey, result, 300);
+
+        return result;
     }
 
     async updateStatus(
@@ -137,8 +239,6 @@ export class CreditApplicationsService {
         if (dto.rejectionReason) {
             application.rejectionReason = dto.rejectionReason;
         }
-
-        console.log("application", application);
 
         if (dto.status === ApplicationStatus.VALIDATING) {
             const providerResult = this.bankProvidersService.consult(
@@ -167,6 +267,21 @@ export class CreditApplicationsService {
         }
 
         const updated = await this.applicationsRepository.save(application);
+
+        // Invalidar caches relacionados después de guardar
+        // Usar método que cubre TODAS las combinaciones de parametros
+        await this.invalidateCacheForApplication(id, updated.country, updated.status);
+
+        // Emitir evento WebSocket para actualización en tiempo real
+        this.realtimeGateway.emitStatusChange({
+            applicationId: updated.id,
+            oldStatus: application.status,
+            newStatus: updated.status,
+            country: updated.country,
+            riskScore: updated.riskScore !== null ? Number(updated.riskScore) : undefined,
+            timestamp: new Date().toISOString(),
+        });
+
         return CreditApplicationResponseDto.fromEntity(updated);
     }
 

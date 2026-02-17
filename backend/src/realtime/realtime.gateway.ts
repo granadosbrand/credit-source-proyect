@@ -11,6 +11,15 @@ type StatusChangeEvent = {
     timestamp?: string;
 };
 
+type ApplicationCreatedEvent = {
+    applicationId: string;
+    country: string;
+    fullName: string;
+    status: string;
+    amountRequested: number;
+    timestamp?: string;
+};
+
 @WebSocketGateway({
     cors: {
         origin: '*',
@@ -29,6 +38,17 @@ export class RealtimeGateway {
             return;
         }
 
+        this.logger.log(`[WebSocket] Emitting status-changed: ${event.applicationId}`);
         this.server.emit('credit-application.status-changed', event);
+    }
+
+    emitApplicationCreated(event: ApplicationCreatedEvent) {
+        if (!this.server) {
+            this.logger.warn('WebSocket server not ready; skipping event emit');
+            return;
+        }
+
+        this.logger.log(`[WebSocket] Emitting application-created: ${event.applicationId}`);
+        this.server.emit('credit-application.created', event);
     }
 }

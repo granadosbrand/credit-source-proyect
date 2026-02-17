@@ -6,6 +6,9 @@ import { CreditApplicationsController } from './credit-applications.controller';
 import { CountryRulesModule } from '../country-rules/country-rules.module';
 import { BankProvidersModule } from '../bank-providers/bank-providers.module';
 import { QueueModule } from '../queue/queue.module';
+import { RedisModule } from '../redis/redis.module';
+import { EncryptionModule } from '../common/encryption/encryption.module';
+import { RealtimeModule } from '../realtime/realtime.module';
 
 @Module({
     imports: [
@@ -13,6 +16,9 @@ import { QueueModule } from '../queue/queue.module';
         CountryRulesModule,
         BankProvidersModule,
         QueueModule,
+        RedisModule,
+        EncryptionModule,
+        RealtimeModule,
     ],
     controllers: [CreditApplicationsController],
     providers: [CreditApplicationsService],

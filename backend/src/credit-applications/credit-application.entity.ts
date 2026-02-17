@@ -5,7 +5,10 @@ import {
     CreateDateColumn,
     UpdateDateColumn,
     Index,
+    BeforeInsert,
+    BeforeUpdate,
 } from 'typeorm';
+import { EncryptionService } from '../common/encryption/encryption.service';
 
 export enum Country {
     MX = 'MX', // Mexico
@@ -27,6 +30,13 @@ export enum ApplicationStatus {
 @Index('idx_credit_applications_status', ['status'])
 @Index('idx_credit_applications_created_at', ['createdAt'])
 export class CreditApplication {
+    // Inyección del servicio de encriptación
+    private static encryptionService: EncryptionService;
+
+    static setEncryptionService(service: EncryptionService): void {
+        CreditApplication.encryptionService = service;
+    }
+
     @PrimaryGeneratedColumn('uuid')
     id: string;
 
@@ -78,4 +88,47 @@ export class CreditApplication {
 
     @Column({ nullable: true })
     createdBy: string; // ID del usuario (a implementar con auth)
+
+    /**
+     * Hook: Encriptar documentNumber antes de insertar
+     */
+    @BeforeInsert()
+    async encryptDocumentOnInsert(): Promise<void> {
+        if (this.documentNumber && CreditApplication.encryptionService) {
+            this.documentNumber = CreditApplication.encryptionService.encrypt(
+                this.documentNumber,
+            );
+        }
+    }
+
+    /**
+     * Hook: Encriptar documentNumber antes de actualizar
+     */
+    @BeforeUpdate()
+    async encryptDocumentOnUpdate(): Promise<void> {
+        if (this.documentNumber && CreditApplication.encryptionService) {
+            // Solo encriptar si comienza con caracteres normal (no es base64)
+            if (!this.documentNumber.includes(':')) {
+                this.documentNumber = CreditApplication.encryptionService.encrypt(
+                    this.documentNumber,
+                );
+            }
+        }
+    }
+
+    /**
+     * Desencriptar documentNumber cuando es cargado explícitamente
+     */
+    getDecryptedDocument(): string | null {
+        if (!this.documentNumber || !CreditApplication.encryptionService) {
+            return null;
+        }
+
+        try {
+            return CreditApplication.encryptionService.decrypt(this.documentNumber);
+        } catch (error) {
+            console.error('Error decrypting document:', error);
+            return null;
+        }
+    }
 }

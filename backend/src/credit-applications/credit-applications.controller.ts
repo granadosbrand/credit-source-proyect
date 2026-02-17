@@ -12,6 +12,7 @@ import { CreditApplicationsService } from './credit-applications.service';
 import {
     CreateCreditApplicationDto,
     CreditApplicationResponseDto,
+    CreditApplicationPublicDto,
     UpdateApplicationStatusDto,
 } from './dtos/credit-application.dto';
 import { Country, ApplicationStatus } from './credit-application.entity';
@@ -46,7 +47,7 @@ export class CreditApplicationsController {
     }
 
     @Get(':id')
-    async findOne(@Param('id') id: string): Promise<CreditApplicationResponseDto> {
+    async findOne(@Param('id') id: string): Promise<CreditApplicationPublicDto> {
         return this.creditApplicationsService.findOne(id);
     }
 

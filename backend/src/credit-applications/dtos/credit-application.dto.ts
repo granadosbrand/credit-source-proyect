@@ -15,6 +15,10 @@ export class UpdateApplicationStatusDto {
     rejectionReason?: string;
 }
 
+/**
+ * DTO General - Incluye datos sensibles (admin/internal)
+ * Mantiene compatibilidad con código existente
+ */
 export class CreditApplicationResponseDto {
     id: string;
     country: Country;
@@ -42,6 +46,36 @@ export class CreditApplicationResponseDto {
         dto.bankProviderData = entity.bankProviderData;
         dto.countryValidation = entity.countryValidation;
         dto.riskScore = entity.riskScore;
+        dto.rejectionReason = entity.rejectionReason;
+        dto.createdAt = entity.createdAt;
+        dto.updatedAt = entity.updatedAt;
+        return dto;
+    }
+}
+
+/**
+ * DTO Público - Filtra datos sensibles (para usuarios normales)
+ * Omite: bankProviderData, riskScore, countryValidation, documentNumber
+ */
+export class CreditApplicationPublicDto {
+    id: string;
+    country: Country;
+    fullName: string;
+    documentType: string;
+    amountRequested: number;
+    status: ApplicationStatus;
+    rejectionReason: string | null;
+    createdAt: Date;
+    updatedAt: Date;
+
+    static fromEntity(entity: CreditApplication): CreditApplicationPublicDto {
+        const dto = new CreditApplicationPublicDto();
+        dto.id = entity.id;
+        dto.country = entity.country;
+        dto.fullName = entity.fullName;
+        dto.documentType = entity.documentType;
+        dto.amountRequested = entity.amountRequested;
+        dto.status = entity.status;
         dto.rejectionReason = entity.rejectionReason;
         dto.createdAt = entity.createdAt;
         dto.updatedAt = entity.updatedAt;

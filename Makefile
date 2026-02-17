@@ -67,6 +67,34 @@ shell-backend: ## Open shell in backend container
 shell-db: ## Open PostgreSQL shell
 	docker compose exec postgres psql -U postgres -d credit_db
 
+shell-redis: ## Open Redis CLI shell
+	docker compose exec redis redis-cli
+
+redis-keys: ## Show all Redis keys
+	docker compose exec redis redis-cli KEYS '*'
+
+redis-cache-keys: ## Show all credit-app cache keys
+	docker compose exec redis redis-cli KEYS 'credit-app*'
+
+redis-clear: ## Clear all Redis cache (KEEP QUEUES)
+	docker compose exec redis redis-cli DEL `docker compose exec redis redis-cli KEYS 'credit-app*' | tr '\n' ' '`
+
+redis-flush: ## ⚠️  DANGEROUS: Flush entire Redis database (clears cache + queues)
+	@echo "⚠️  WARNING: This will clear ALL Redis data including queues!"
+	@read -p "Are you sure? (y/N) " -n 1 -r; \
+	echo; \
+	if [[ $$REPLY =~ ^[Yy]$$ ]]; then \
+		docker compose exec redis redis-cli FLUSHDB; \
+		echo "✅ Redis flushed"; \
+	else \
+		echo "❌ Cancelled"; \
+	fi
+
+redis-commander: ## Open Redis Commander GUI (http://localhost:8081)
+	@echo "🔍 Opening Redis Commander at http://localhost:8081"
+	@docker compose --profile debug up -d redis-commander
+	@echo "✅ Redis Commander is running (profile: debug)"
+
 test: ## Run tests
 	@echo "🧪 Running backend tests..."
 	@cd backend && pnpm test

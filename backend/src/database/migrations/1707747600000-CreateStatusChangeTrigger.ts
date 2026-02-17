@@ -29,7 +29,7 @@ export class CreateStatusChangeTrigger1707747600000 implements MigrationInterfac
             $$ LANGUAGE plpgsql;
         `);
 
-        // Drop trigger if it exists (idempotent)
+        // Drop trigger if it exists to avoid duplicates
         await queryRunner.query(`
             DROP TRIGGER IF EXISTS application_status_change_trigger 
             ON credit_applications;
