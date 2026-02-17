@@ -1,15 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Queue, Worker, Job } from 'bullmq';
 import IORedis from 'ioredis';
-
-export interface QueueJobData {
-    application_id: string;
-    full_name?: string;
-    country?: string;
-    risk_score?: number;
-    status?: string;
-    action?: string;
-}
+import { QueueJobData } from './interfaces/queue-job.interface';
 
 @Injectable()
 export class QueueService {
@@ -133,8 +125,10 @@ export class QueueService {
     // Job enqueueing methods
     async enqueueRiskEvaluation(data: QueueJobData) {
         await this.riskQueue.add('evaluate', data, {
-            delay: 1000, // Start after 1 second
+            delay: 1000,
             priority: 10,
+            attempts: 3,
+            backoff: { type: 'exponential', delay: 2000 },
         });
         this.logger.log(
             `[RISK ENQUEUED] Application ${data.application_id} queued for risk evaluation`,
@@ -145,6 +139,8 @@ export class QueueService {
         await this.auditQueue.add('log', data, {
             delay: 1000,
             priority: 5,
+            attempts: 3,
+            backoff: { type: 'exponential', delay: 2000 },
         });
         this.logger.log(
             `[AUDIT ENQUEUED] Application ${data.application_id} queued for audit`,
@@ -155,6 +151,8 @@ export class QueueService {
         await this.notificationQueue.add('send', data, {
             delay: 5000,
             priority: 8,
+            attempts: 3,
+            backoff: { type: 'exponential', delay: 3000 },
         });
         this.logger.log(
             `[NOTIFICATION ENQUEUED] Application ${data.application_id} queued for notification`,

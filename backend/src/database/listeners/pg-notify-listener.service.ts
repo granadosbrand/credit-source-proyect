@@ -2,7 +2,6 @@ import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/commo
 import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
 import { QueueService } from '../../queue/queue.service';
-import { RealtimeGateway } from '../../realtime/realtime.gateway';
 
 type PgStatusChangePayload = {
     application_id: string;
@@ -18,15 +17,22 @@ type PgStatusChangePayload = {
 export class PgNotifyListenerService implements OnModuleInit, OnModuleDestroy {
     private readonly logger = new Logger(PgNotifyListenerService.name);
     private pgClient: any;
+    private isDestroyed = false;
+    private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
 
     constructor(
         @InjectDataSource() private dataSource: DataSource,
         private readonly queueService: QueueService,
-        private readonly realtimeGateway: RealtimeGateway,
     ) {
     }
 
     async onModuleInit() {
+        await this.connect();
+    }
+
+    private async connect() {
+        if (this.isDestroyed) return;
+
         try {
             // Obtener cliente de PostgreSQL nativo
             this.pgClient = await (this.dataSource.driver as any).master.connect();
@@ -48,17 +54,36 @@ export class PgNotifyListenerService implements OnModuleInit, OnModuleDestroy {
                 }
             });
 
-            // Handler de errores
+            // Handler de errores — reconectar automáticamente
             this.pgClient.on('error', (err: any) => {
-                this.logger.error('PostgreSQL client error', err);
+                this.logger.error('PostgreSQL client error, will attempt reconnect', err);
+                this.scheduleReconnect();
             });
 
         } catch (error) {
             this.logger.error('Failed to initialize pg_notify listener', error);
+            this.scheduleReconnect();
         }
     }
 
+    private scheduleReconnect() {
+        if (this.isDestroyed || this.reconnectTimer) return;
+
+        this.reconnectTimer = setTimeout(async () => {
+            this.reconnectTimer = null;
+            this.logger.log('Attempting to reconnect pg_notify listener...');
+            await this.connect();
+        }, 5000);
+    }
+
     async onModuleDestroy() {
+        this.isDestroyed = true;
+
+        if (this.reconnectTimer) {
+            clearTimeout(this.reconnectTimer);
+            this.reconnectTimer = null;
+        }
+
         if (this.pgClient) {
             try {
                 await this.pgClient.query('UNLISTEN application_changes');
@@ -86,26 +111,16 @@ export class PgNotifyListenerService implements OnModuleInit, OnModuleDestroy {
             action: `Status changed to ${payload.new_status}`,
         };
 
-        // Auditar siempre
+        // Auditar siempre cada cambio de estado
         await this.queueService.enqueueAudit(jobData);
 
-        if (payload.new_status === 'VALIDATING') {
-            await this.queueService.enqueueRiskEvaluation(jobData);
-            this.logger.log('Risk job queued');
-        }
-
+        // Notificar solo cuando se llega a un estado final
         if (['APPROVED', 'REJECTED'].includes(payload.new_status)) {
             await this.queueService.enqueueNotification(jobData);
             this.logger.log('Notification job queued');
         }
 
-        this.realtimeGateway.emitStatusChange({
-            applicationId: payload.application_id,
-            oldStatus: payload.old_status,
-            newStatus: payload.new_status,
-            country: payload.country,
-            riskScore: Number.isNaN(riskScore) ? undefined : riskScore,
-            timestamp: payload.timestamp,
-        });
+        // NOTA: No emitimos WebSocket aquí — el servicio ya lo hace de forma
+        // inmediata en updateStatus()/create() para evitar duplicados.
     }
 }

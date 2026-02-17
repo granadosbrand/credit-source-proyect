@@ -133,12 +133,13 @@ export class CreditApplicationsService implements OnModuleInit {
 
         const saved = await this.applicationsRepository.save(application);
 
-        // Invalidar cache de listados
+        // Invalidar cache de listados (keys exactas + patrón para cubrir todas las combinaciones)
         const keysToInvalidate = [
             this.getCacheKeyForFindAll(),
             this.getCacheKeyForFindAll(dto.country),
         ];
         await this.redisService.delMany(keysToInvalidate);
+        await this.redisService.delByPattern(`credit-apps-list:country:${dto.country}*`);
 
         // Emitir evento WebSocket para actualización en tiempo real
         this.realtimeGateway.emitApplicationCreated({
@@ -174,15 +175,10 @@ export class CreditApplicationsService implements OnModuleInit {
 
         const query = this.applicationsRepository.createQueryBuilder('app');
 
-        // Si no es admin, filtrar solo sus solicitudes
-        if (userId && userRole !== 'ADMIN') {
-            query.where('app.createdBy = :userId', { userId });
-        } else if (country) {
-            query.where('app.country = :country', { country });
-        }
-
+        // Todos los usuarios ven todas las solicitudes (MVP)
+        // La diferencia es que solo ADMIN puede cambiar estados (controlado en controller)
         if (country) {
-            query.andWhere('app.country = :country', { country });
+            query.where('app.country = :country', { country });
         }
 
         if (status) {
@@ -262,6 +258,9 @@ export class CreditApplicationsService implements OnModuleInit {
             throw new NotFoundException(`Solicitud ${id} no encontrada`);
         }
 
+        // Guardar status original ANTES de mutar para el evento WebSocket
+        const previousStatus = application.status;
+
         application.status = dto.status;
         if (dto.rejectionReason) {
             application.rejectionReason = dto.rejectionReason;
@@ -302,7 +301,7 @@ export class CreditApplicationsService implements OnModuleInit {
         // Emitir evento WebSocket para actualización en tiempo real
         this.realtimeGateway.emitStatusChange({
             applicationId: updated.id,
-            oldStatus: application.status,
+            oldStatus: previousStatus,
             newStatus: updated.status,
             country: updated.country,
             riskScore: updated.riskScore !== null ? Number(updated.riskScore) : undefined,

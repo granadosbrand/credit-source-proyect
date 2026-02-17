@@ -45,18 +45,12 @@ export class CreditApplicationsController {
         @Query('status') status?: ApplicationStatus,
         @Query('limit') limit?: number,
         @Query('offset') offset?: number,
-        @Request() req?: any,
     ) {
-        const userId = req?.user?.userId;
-        const userRole = req?.user?.role;
-
         return this.creditApplicationsService.findAll(
             country,
             status,
             limit || 50,
             offset || 0,
-            userId,
-            userRole,
         );
     }
 
@@ -65,6 +59,7 @@ export class CreditApplicationsController {
         @Param('id') id: string,
         @Request() req: any,
     ): Promise<CreditApplicationPublicDto> {
+
         const userId = req.user.userId;
         const userRole = req.user.role;
 
