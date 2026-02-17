@@ -101,7 +101,7 @@ export function CreateApplicationForm({ onSuccess }: CreateApplicationFormProps)
                 </Button>
             </Link>
 
-            <Card className="w-full">
+            <Card className="w-full mt-4">
                 <CardHeader>
                     <CardTitle className="text-2xl">Nueva Solicitud de Crédito</CardTitle>
                     <CardDescription>

@@ -58,22 +58,11 @@ export class CreditApplicationsService implements OnModuleInit {
      * Usado por processors, webhooks y otros servicios
      */
     async invalidateCacheForApplication(id: string, country?: Country, status?: ApplicationStatus): Promise<void> {
-        const keysToInvalidate = [
-            this.getCacheKeyForFindOne(id),
-            this.getCacheKeyForFindAll(),
-        ];
+        // Invalidar cache del detalle
+        await this.redisService.del(this.getCacheKeyForFindOne(id));
 
-        if (country) {
-            keysToInvalidate.push(this.getCacheKeyForFindAll(country));
-        }
-
-        await this.redisService.delMany(keysToInvalidate);
-
-        // Invalidar TODOS los keys que contengan "credit-apps-list:country:X"
-        // para cubrir todas las combinaciones de status/limit/offset
-        if (country) {
-            await this.redisService.delByPattern(`credit-apps-list:country:${country}*`);
-        }
+        // Invalidar TODOS los listados (cualquier combinación de country/status/limit/offset)
+        await this.redisService.delByPattern('credit-apps-list*');
     }
 
     async create(
@@ -88,8 +77,6 @@ export class CreditApplicationsService implements OnModuleInit {
         if (!dto.amountRequested || dto.amountRequested <= 0) {
             throw new BadRequestException(`Monto solicitado inválido: ${dto.amountRequested}`);
         }
-
-        console.log("full dto: ", dto)
 
         // Validar con reglas de país
         const validation = await this.countryRulesService.validate(dto.country, {
@@ -135,13 +122,8 @@ export class CreditApplicationsService implements OnModuleInit {
 
         const saved = await this.applicationsRepository.save(application);
 
-        // Invalidar cache de listados (keys exactas + patrón para cubrir todas las combinaciones)
-        const keysToInvalidate = [
-            this.getCacheKeyForFindAll(),
-            this.getCacheKeyForFindAll(dto.country),
-        ];
-        await this.redisService.delMany(keysToInvalidate);
-        await this.redisService.delByPattern(`credit-apps-list:country:${dto.country}*`);
+        // Invalidar TODOS los listados cacheados (cualquier combinación de filtros)
+        await this.redisService.delByPattern('credit-apps-list*');
 
         // Emitir evento WebSocket para actualización en tiempo real
         this.realtimeGateway.emitApplicationCreated({

@@ -48,7 +48,7 @@ export default function ApplicationDetailPage(props: ApplicationDetailPageProps)
     return (
         <div className="space-y-6">
             <Link href={ROUTES.APPLICATIONS}>
-                <Button variant="outline" className="flex items-center space-x-2">
+                <Button variant="outline" className="flex items-center space-x-2 ">
                     <ArrowLeft className="h-4 w-4" />
                     <span>Volver</span>
                 </Button>
