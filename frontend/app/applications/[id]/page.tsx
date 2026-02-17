@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { use } from 'react';
 import { useApplication } from '@/hooks/useApplication';
 import { useRealtimeUpdates } from '@/hooks/useRealtimeUpdates';
 import { useAuthStore } from '@/store/authStore';
@@ -12,12 +12,13 @@ import { ROUTES } from '@/lib/constants';
 import { ArrowLeft } from 'lucide-react';
 
 interface ApplicationDetailPageProps {
-    params: {
+    params: Promise<{
         id: string;
-    };
+    }>;
 }
 
-export default function ApplicationDetailPage({ params }: ApplicationDetailPageProps) {
+export default function ApplicationDetailPage(props: ApplicationDetailPageProps) {
+    const params = use(props.params);
     const { id } = params;
     const { user } = useAuthStore();
 
