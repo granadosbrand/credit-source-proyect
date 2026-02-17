@@ -2,6 +2,11 @@ import { MigrationInterface, QueryRunner, TableColumn, TableForeignKey } from 't
 
 export class AddCreatedByToCreditApplications1708085300000 implements MigrationInterface {
     public async up(queryRunner: QueryRunner): Promise<void> {
+        const hasTable = await queryRunner.hasTable('credit_applications');
+        if (!hasTable) {
+            return;
+        }
+
         const table = await queryRunner.getTable('credit_applications');
         const createdByColumn = table?.columns.find((column) => column.name === 'createdBy');
         const hasCreatedBy = Boolean(createdByColumn);
@@ -60,6 +65,11 @@ export class AddCreatedByToCreditApplications1708085300000 implements MigrationI
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
+        const hasTable = await queryRunner.hasTable('credit_applications');
+        if (!hasTable) {
+            return;
+        }
+
         // Remover foreign key
         const table = await queryRunner.getTable('credit_applications');
         const foreignKey = table?.foreignKeys.find(

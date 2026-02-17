@@ -2,6 +2,11 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class CreateStatusChangeTrigger1707747600000 implements MigrationInterface {
     public async up(queryRunner: QueryRunner): Promise<void> {
+        const hasTable = await queryRunner.hasTable('credit_applications');
+        if (!hasTable) {
+            return;
+        }
+
         // Create the function that sends notifications
         await queryRunner.query(`
             CREATE OR REPLACE FUNCTION notify_status_change()
@@ -45,11 +50,15 @@ export class CreateStatusChangeTrigger1707747600000 implements MigrationInterfac
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
+        const hasTable = await queryRunner.hasTable('credit_applications');
+
         // Rollback: drop trigger and function
-        await queryRunner.query(`
-            DROP TRIGGER IF EXISTS application_status_change_trigger 
-            ON credit_applications;
-        `);
+        if (hasTable) {
+            await queryRunner.query(`
+                DROP TRIGGER IF EXISTS application_status_change_trigger 
+                ON credit_applications;
+            `);
+        }
 
         await queryRunner.query(`
             DROP FUNCTION IF EXISTS notify_status_change();
