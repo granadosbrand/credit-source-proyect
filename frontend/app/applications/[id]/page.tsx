@@ -18,7 +18,7 @@ interface ApplicationDetailPageProps {
 }
 
 export default function ApplicationDetailPage({ params }: ApplicationDetailPageProps) {
-    const { id } = React.use(params);
+    const { id } = params;
     const { user } = useAuthStore();
 
     // Enable real-time updates for this specific application

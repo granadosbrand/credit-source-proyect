@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/authStore';
-import { UserRole, RegisterRequest } from '@/types/api';
+import { RegisterRequest } from '@/types/api';
 import { Button, Input, Label } from '@/components/ui';
 import { AlertCircle, Loader } from 'lucide-react';
 import Link from 'next/link';
@@ -14,7 +14,7 @@ export default function RegisterPage() {
     const { register, isLoading, error, clearError } = useAuthStore();
 
     const [formData, setFormData] = useState<RegisterRequest>({
-        email: '',
+        username: '',
         password: '',
         role: 'USER',
     });
@@ -41,7 +41,7 @@ export default function RegisterPage() {
         setLocalError(null);
 
         // Validations
-        if (!formData.email || !formData.password || !confirmPassword) {
+        if (!formData.username || !formData.password || !confirmPassword) {
             setLocalError('Por favor completa todos los campos');
             return;
         }
@@ -88,18 +88,18 @@ export default function RegisterPage() {
 
                     {/* Form */}
                     <form onSubmit={handleSubmit} className="space-y-5">
-                        {/* Email */}
+                        {/* Username */}
                         <div>
-                            <Label htmlFor="email" className="text-sm font-medium text-gray-700">
-                                Email
+                            <Label htmlFor="username" className="text-sm font-medium text-gray-700">
+                                Usuario
                             </Label>
                             <Input
-                                id="email"
-                                name="email"
-                                type="email"
-                                value={formData.email}
+                                id="username"
+                                name="username"
+                                type="text"
+                                value={formData.username}
                                 onChange={handleChange}
-                                placeholder="tu@email.com"
+                                placeholder="tu_usuario"
                                 className="mt-1"
                                 disabled={isLoading}
                             />

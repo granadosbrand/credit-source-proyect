@@ -47,7 +47,7 @@ export const useAuthStore = create<AuthState>()(
                 set({ isLoading: true, error: null });
                 try {
                     const response = await apiClient.post<AuthResponse>(
-                        'api/auth/login',
+                        '/api/auth/login',
                         credentials,
                     );
 
@@ -72,9 +72,8 @@ export const useAuthStore = create<AuthState>()(
             register: async (data: RegisterRequest) => {
                 set({ isLoading: true, error: null });
                 try {
-                    console.log("entrando a register en authStore con data:", data);
                     const response = await apiClient.post<AuthResponse>(
-                        'api/auth/register',
+                        '/api/auth/register',
                         data,
                     );
 
@@ -86,7 +85,6 @@ export const useAuthStore = create<AuthState>()(
 
                     localStorage.setItem('auth_token', response.data.access_token);
                 } catch (error: any) {
-                    console.log('Registration error:', error);
                     const message =
                         error.message || 'Error al registrarse';
                     set({

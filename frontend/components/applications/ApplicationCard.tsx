@@ -39,7 +39,7 @@ function getAvailableStatusTransitions(currentStatus: ApplicationStatus): Applic
 /**
  * ApplicationCard - Tarjeta que muestra información detallada de una solicitud
  */
-export function ApplicationCard({ application, onUpdate }: ApplicationCardProps) {
+export function ApplicationCard({ application, onUpdate, userRole }: ApplicationCardProps) {
     const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
         personal: true,
         financial: true,

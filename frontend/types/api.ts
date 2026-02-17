@@ -11,12 +11,14 @@ import {
 } from './application';
 import { PaginatedResponse } from './common';
 
+export type { CreateCreditApplicationDto } from './application';
+
 // Auth types
 export type UserRole = 'USER' | 'ADMIN';
 
 export interface User {
     id: string;
-    email: string;
+    username: string;
     role: UserRole;
 }
 
@@ -26,15 +28,14 @@ export interface AuthResponse {
 }
 
 export interface RegisterRequest {
-    email: string;
+    username: string;
     password: string;
     role: UserRole;
 }
 
 export interface LoginRequest {
-    email: string;
+    username: string;
     password: string;
-    role: UserRole;
 }
 
 // Request payloads

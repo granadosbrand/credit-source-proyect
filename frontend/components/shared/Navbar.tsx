@@ -63,7 +63,7 @@ export function Navbar() {
                                 <div className="flex items-center gap-2">
                                     <User className="h-4 w-4 text-gray-600" />
                                     <div className="text-sm">
-                                        <p className="font-medium text-gray-900 text-xs">{user.email}</p>
+                                        <p className="font-medium text-gray-900 text-xs">{user.username}</p>
                                         <p className="text-xs text-gray-500">
                                             {user.role === 'ADMIN' ? 'Admin' : 'Usuario'}
                                         </p>

@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/authStore';
-import { UserRole, LoginRequest } from '@/types/api';
+import { LoginRequest } from '@/types/api';
 import { Button, Input, Label } from '@/components/ui';
 import { AlertCircle, Loader } from 'lucide-react';
 import Link from 'next/link';
@@ -11,18 +11,16 @@ import { ROUTES } from '@/lib/constants';
 
 export default function LoginPage() {
     const router = useRouter();
-    const searchParams = useSearchParams();
     const { login, isLoading, error, clearError } = useAuthStore();
 
     const [formData, setFormData] = useState<LoginRequest>({
-        email: '',
+        username: '',
         password: '',
-        role: 'USER',
     });
 
     const [localError, setLocalError] = useState<string | null>(null);
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
         setFormData((prev) => ({
             ...prev,
@@ -36,7 +34,7 @@ export default function LoginPage() {
         e.preventDefault();
         setLocalError(null);
 
-        if (!formData.email || !formData.password) {
+        if (!formData.username || !formData.password) {
             setLocalError('Por favor completa todos los campos');
             return;
         }
@@ -44,7 +42,9 @@ export default function LoginPage() {
         try {
             await login(formData);
             // Redirect to applications or home
-            const redirectTo = searchParams.get('from') || ROUTES.APPLICATIONS;
+            const redirectTo = typeof window !== 'undefined'
+                ? new URLSearchParams(window.location.search).get('from') || ROUTES.APPLICATIONS
+                : ROUTES.APPLICATIONS;
             router.push(redirectTo);
         } catch (err) {
             setLocalError(error || 'Error al iniciar sesión');
@@ -75,18 +75,18 @@ export default function LoginPage() {
 
                     {/* Form */}
                     <form onSubmit={handleSubmit} className="space-y-5">
-                        {/* Email */}
+                        {/* Username */}
                         <div>
-                            <Label htmlFor="email" className="text-sm font-medium text-gray-700">
-                                Email
+                            <Label htmlFor="username" className="text-sm font-medium text-gray-700">
+                                Usuario
                             </Label>
                             <Input
-                                id="email"
-                                name="email"
-                                type="email"
-                                value={formData.email}
+                                id="username"
+                                name="username"
+                                type="text"
+                                value={formData.username}
                                 onChange={handleChange}
-                                placeholder="tu@email.com"
+                                placeholder="tu_usuario"
                                 className="mt-1"
                                 disabled={isLoading}
                             />
@@ -107,24 +107,6 @@ export default function LoginPage() {
                                 className="mt-1"
                                 disabled={isLoading}
                             />
-                        </div>
-
-                        {/* Role Selector */}
-                        <div>
-                            <Label htmlFor="role" className="text-sm font-medium text-gray-700">
-                                Tipo de Usuario
-                            </Label>
-                            <select
-                                id="role"
-                                name="role"
-                                value={formData.role}
-                                onChange={handleChange}
-                                disabled={isLoading}
-                                className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 disabled:opacity-50"
-                            >
-                                <option value="USER">Usuario (Solicitar Crédito)</option>
-                                <option value="ADMIN">Administrador (Ver Panel)</option>
-                            </select>
                         </div>
 
                         {/* Submit Button */}
@@ -160,7 +142,7 @@ export default function LoginPage() {
 
                 {/* Footer */}
                 <p className="text-center text-xs text-gray-500 mt-4">
-                    Demo credentials: Usa cualquier email y contraseña válida
+                    Demo credentials: user/user o admin/admin
                 </p>
             </div>
         </div>
