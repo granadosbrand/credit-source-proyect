@@ -1,0 +1,285 @@
+{
+  "info": {
+    "_postman_id": "a3cefc02-5912-41fb-a4d7-ce6f03d4ad3d",
+    "name": "Credit Source Project",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "52356451",
+    "_collection_link": "https://go.postman.co/collection/52356451-a3cefc02-5912-41fb-a4d7-ce6f03d4ad3d?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "Applications",
+      "item": [
+        {
+          "name": "Application detail",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{SERVICES}}/api/credit-applications/:id",
+              "host": [
+                "{{SERVICES}}"
+              ],
+              "path": [
+                "api",
+                "credit-applications",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "e29f7040-855e-47b4-94c8-91e2d9129c83"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get applications",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{SERVICES}}/api/credit-applications?limit=20&offset=0",
+              "host": [
+                "{{SERVICES}}"
+              ],
+              "path": [
+                "api",
+                "credit-applications"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "20"
+                },
+                {
+                  "key": "offset",
+                  "value": "0"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Submitt application",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"country\": \"CO\",\n    \"fullName\": \"Diego Granados\",\n    \"documentType\": \"CC\",\n    \"documentNumber\": \"1115916214\",\n    \"amountRequested\": 50000000,\n    \"monthlyIncome\": 100000000\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{SERVICES}}/api/credit-applications",
+              "host": [
+                "{{SERVICES}}"
+              ],
+              "path": [
+                "api",
+                "credit-applications"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update application status",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{SERVICES}}/api/credit-applications/:id/status",
+              "host": [
+                "{{SERVICES}}"
+              ],
+              "path": [
+                "api",
+                "credit-applications",
+                ":id",
+                "status"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "auth",
+      "item": [
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Parse the response",
+                  "const response = pm.response.json();",
+                  "",
+                  "// Save the access token to a collection variable",
+                  "if (response.access_token) {",
+                  "    pm.collectionVariables.set(\"access_token\", response.access_token);",
+                  "    console.log(\"Access token saved successfully\");",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"username\": \"admin\",\r\n    \"password\": \"admin\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{SERVICES}}/api/auth/login",
+              "host": [
+                "{{SERVICES}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{access_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "requests": {},
+        "exec": [
+          "// Skip auto-login if this IS the login request (to avoid infinite loop)",
+          "if (pm.info.requestName === \"Login\" || pm.request.url.toString().includes(\"/api/auth/login\")) {",
+          "    console.log(\"Skipping auto-login for the login request itself\");",
+          "    return;",
+          "}",
+          "",
+          "// Check if we already have a valid token (optional optimization)",
+          "// You can remove this block if you want to login before EVERY request",
+          "// const currentToken = pm.collectionVariables.get(\"access_token\");",
+          "// if (currentToken) {",
+          "//     console.log(\"Token already exists, using existing token\");",
+          "//     // Optionally, you could add token expiration logic here",
+          "//     return;",
+          "// }",
+          "",
+          "// Perform login request",
+          "const loginRequest = {",
+          "    url: pm.collectionVariables.get(\"SERVICES\") + \"/api/auth/login\",",
+          "    method: \"POST\",",
+          "    header: {",
+          "        \"Content-Type\": \"application/json\"",
+          "    },",
+          "    body: {",
+          "        mode: \"raw\",",
+          "        raw: JSON.stringify({",
+          "            \"username\": \"admin\",",
+          "            \"password\": \"admin\"",
+          "        })",
+          "    }",
+          "};",
+          "",
+          "pm.sendRequest(loginRequest, (err, response) => {",
+          "    if (err) {",
+          "        console.error(\"Auto-login failed:\", err);",
+          "        return;",
+          "    }",
+          "    ",
+          "    const jsonResponse = response.json();",
+          "",
+          "    if (jsonResponse.access_token) {",
+          "        pm.collectionVariables.set(\"access_token\", jsonResponse.access_token);",
+          "        console.log(\"Auto-login successful - token updated\");",
+          "    } else {",
+          "        console.error(\"No access_token in login response\");",
+          "    }",
+          "});"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "SERVICES",
+      "value": ""
+    },
+    {
+      "key": "access_token",
+      "value": ""
+    }
+  ]
+}

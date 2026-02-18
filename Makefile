@@ -100,13 +100,13 @@ test: ## Run tests
 	@cd backend && pnpm test
 	@echo "✅ Tests complete"
 
-dev-backend: ## Run backend locally (without Docker)
+dev-backend: ## Run backend locally 
 	@cd backend && pnpm run start:dev
 
-dev-frontend: ## Run frontend locally (without Docker)
+dev-frontend: ## Run frontend locally 
 	@cd frontend && pnpm dev --port 3001
 
-# Database commands (to be implemented later)
+# Database commands 
 migrate: ## Run database migrations
 	@echo "⚠️  Migration support will be added in next phase"
 
