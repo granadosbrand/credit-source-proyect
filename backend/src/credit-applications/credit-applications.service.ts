@@ -229,6 +229,31 @@ export class CreditApplicationsService implements OnModuleInit {
         return result;
     }
 
+    async remove(id: string): Promise<void> {
+        const application = await this.applicationsRepository.findOne({
+            where: { id },
+        });
+
+        if (!application) {
+            throw new NotFoundException(`Solicitud ${id} no encontrada`);
+        }
+
+        await this.applicationsRepository.remove(application);
+
+        // Invalidar caches relacionados (detalle + listados)
+        await this.invalidateCacheForApplication(id, application.country, application.status);
+
+        // Emitir evento WebSocket para actualización en tiempo real
+        this.realtimeGateway.emitStatusChange({
+            applicationId: application.id,
+            oldStatus: application.status,
+            newStatus: "", // TODO: No está definido en el front todavía
+            country: application.country,
+            riskScore: undefined,
+            timestamp: new Date().toISOString(),
+        });
+    }
+
     async updateStatus(
         id: string,
         dto: UpdateApplicationStatusDto,

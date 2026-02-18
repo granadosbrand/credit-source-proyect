@@ -3,6 +3,7 @@ import {
     Get,
     Post,
     Patch,
+    Delete,
     Param,
     Body,
     Query,
@@ -82,6 +83,24 @@ export class CreditApplicationsController {
         @Body() dto: UpdateApplicationStatusDto,
     ): Promise<CreditApplicationResponseDto> {
         return this.creditApplicationsService.updateStatus(id, dto);
+    }
+
+    @Delete(':id')
+    @HttpCode(204)
+    async remove(
+        @Param('id') id: string,
+        @Request() req: any,
+    ): Promise<void> {
+        const userId = req.user.userId;
+        const userRole = req.user.role;
+
+        const application = await this.creditApplicationsService.findOneById(id);
+
+        if (userRole !== UserRole.ADMIN && application.createdBy !== userId) {
+            throw new ForbiddenException('No tienes acceso a esta solicitud');
+        }
+
+        await this.creditApplicationsService.remove(id);
     }
 }
 
